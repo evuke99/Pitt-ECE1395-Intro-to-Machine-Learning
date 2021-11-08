@@ -13,7 +13,7 @@ sizeDataIn = size(dataIn);
 %get training and testing data
 [X_train, y_train, X_test, y_test] = getTrainAndTestMatrix(dataIn(:,1:sizeDataIn(2) - 1), dataIn(:,sizeDataIn(2)), 0.7031);
 
-%% Part 1
+%% Question 1
 
 %% Part a
 
@@ -34,8 +34,8 @@ for i = 1:length(y_train)
     end
 end
 
-sizeOfX_train_0 = size(X_train_0)
-sizeOfX_train_1 = size(X_train_1)
+sizeOfX_train_0 = size(X_train_0) %output
+sizeOfX_train_1 = size(X_train_1) %output
 
 %% Part b
 
@@ -51,42 +51,95 @@ class = [0; 0; 0; 0; 0; 0; 0; 0; 1; 1; 1; 1; 1; 1; 1; 1];
 mean = horzcat(meanClass0, meanClass1)';
 std = horzcat(stdClass0, stdClass1)';
 
-mean_std_table = table(feature, class, mean, std)
+mean_std_table = table(feature, class, mean, std) %output
 
 %% Part c
  P_w0 = 0.65;
  P_w1 = 0.35;
  
- P_Xj_w0 = zeros(228,8);
- P_Xj_w1 = zeros(228,8);
-
+ results = zeros(1,228);
  
- %i
+ numCorrect = 0;
 
- for j = 1:8
+ for i = 1:228
      
-    coeff0 = 0;
-    exponent0 = zeros(228,1);
-    coeff1 = 0;
-    exponent1 = zeros(228,1);
+      P_Xj_w0 = zeros(1,8);
+      P_Xj_w1 = zeros(1,8);
+      
+      P_X_w0 = 1;
+      P_X_w1 = 1;
+      
+     for j = 1:8
+
+        P_Xj_w0(j) = sum(1/(sqrt(2*pi) * stdClass0(j)) * exp(-(X_test(i,j) - meanClass0(j)).^2/(2*stdClass0(j))));
+        P_Xj_w1(j) = sum(1/(sqrt(2*pi) * stdClass1(j)) * exp(-(X_test(i,j) - meanClass1(j)).^2/(2*stdClass1(j))));
+        
+     end
+     
+     for j = 1:8
+
+        P_X_w0 = P_X_w0 .* P_Xj_w0(1,j);
+        P_X_w1 = P_X_w1 .* P_Xj_w1(1,j);
     
-    coeff0 = 1/(sqrt(2*pi)*stdClass0(j));
-    exponent0 = exp( ( -(X_test(:,j) - meanClass0(j)) ) / (2 * stdClass0(j)^2));
-    P_Xj_w0(:,j) = coeff0 .* exponent0;
-    
-    coeff1 = 1/(sqrt(2*pi)*stdClass1(j));
-    exponent1 = exp( ( -(X_test(:,j) - meanClass1(j)) ) / (2 * stdClass1(j)^2));
-    P_Xj_w1(:,j) = coeff1 .* exponent1;
+     end
+     
+     P_w0_X = P_X_w0 * P_w0;
+     P_w1_X = P_X_w1 * P_w1;
+        
+     if(P_w0_X >= P_w1_X)
+         results(i) = 0;
+     else
+         results(i) = 1;
+     end
+     
+     if(results(i) == y_test(i))
+         numCorrect = numCorrect + 1;
+     end
 
  end
 
-% pd = normpdf(X_test(:,1), meanClass0(1), stdClass0(1));
-% 
-% plot(X_test(:,1), pd)
+accuracy = numCorrect/length(y_test) %output
 
- 
- %ii
- 
+%% Question 2
+
+%% Part a
+
+C = cov(X_train); %output screenshot of matrix
+sizeC = size(C) %output
+
+%% Part b
+
+%mean vectors calculated above
+
+%% Part c
+
+sizeXTest = size(X_test);
+results = zeros(sizeXTest(1), 1);
+numCorrect = 0;
+
+for i = 1:sizeXTest(1)
+    
+    %had to switch transpose becuase of meanClass being a row vector
+    d0 = sqrt((X_test(i,:) - meanClass0')' * inv(C) *  (X_test(i,:) - meanClass0'));
+    d1 = sqrt((X_test(i,:) - meanClass1')' * inv(C) *  (X_test(i,:) - meanClass1'));
+    
+    %account for the non-equal probabilites
+    d0 = d0 - 2*log(P_w0);
+    d1 = d1 - 2*log(P_w1);
+    
+    if d0 >= d1
+        results(i) = 0;
+    else
+        results(i) = 1;
+    end
+    
+    if(results(i) == y_test(i))
+        numCorrect = numCorrect + 1;
+    end
+end
+
+accuracy = numCorrect/length(y_test) %output
+
 
      
      
